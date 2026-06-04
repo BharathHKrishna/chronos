@@ -16,6 +16,13 @@ async def lifespan(app: FastAPI):
         await init_db()
     except Exception:
         pass
+    # Pre-load demo locations so they're instant for new visitors
+    try:
+        from apps.api.seed_loader import load_seed_data
+        await load_seed_data()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("Seed load failed: %s", e)
     yield
 
 
