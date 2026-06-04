@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: chronos-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: singapore
+    envVars:
+      - key: GEE_PROJECT
+        value: "907232950083"
+      - key: GROQ_API_KEY
+        sync: false          # set manually in Render dashboard
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: chronos-redis
+          property: connectionString
+      - key: DATABASE_URL
+        value: ""            # optional — API works without postgres
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: chronos-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: chronos-redis
+          property: connectionString
+      - key: SENTRY_DSN
+        value: ""
+      - key: WANDB_API_KEY
+        value: ""
+    healthCheckPath: /health
+
+  - type: redis
+    name: chronos-redis
+    plan: free
+    region: singapore
+    maxmemoryPolicy: allkeys-lru
