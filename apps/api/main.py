@@ -49,6 +49,30 @@ app.include_router(narrative.router, prefix="/narrative", tags=["narrative"])
 app.include_router(tiles.router, prefix="/tile", tags=["tiles"])
 
 
+@app.get("/gee-test", tags=["monitoring"])
+def gee_test():
+    """Quick GEE connectivity test — returns NDVI value or error."""
+    try:
+        import ee
+        from apps.api.services.gee_fetcher import _init_gee
+        _init_gee()
+        region = ee.Geometry.Point([77.59, 12.97]).buffer(500)
+        val = (
+            ee.ImageCollection("LANDSAT/LC08/C02/T1_L2")
+            .filter(ee.Filter.calendarRange(2020, 2020, "year"))
+            .filter(ee.Filter.calendarRange(5, 9, "month"))
+            .select(["SR_B4", "SR_B5"])
+            .median()
+            .normalizedDifference(["SR_B5", "SR_B4"])
+            .reduceRegion(ee.Reducer.mean(), region, 30)
+            .getInfo()
+        )
+        return {"gee": "ok", "bangalore_ndvi_2020": val}
+    except Exception as e:
+        import traceback
+        return {"gee": "error", "detail": str(e), "traceback": traceback.format_exc()}
+
+
 @app.get("/health", include_in_schema=False)
 def health():
     return {"status": "ok"}
@@ -71,10 +95,12 @@ async def status():
     except Exception as e:
         checks["redis"] = f"error: {e}"
 
-    # GEE auth (cheap: just check credentials file exists, don't make a network call)
+    # GEE auth — check env var (Render) or local credentials file
     import os
-    gee_ok = os.path.exists(os.path.expanduser("~/.config/earthengine/credentials"))
-    checks["gee_credentials"] = "ok" if gee_ok else "missing"
+    has_b64 = bool(settings.gee_credentials_b64)
+    has_file = os.path.exists(os.path.expanduser("~/.config/earthengine/credentials"))
+    has_sa = bool(settings.gee_service_account_email)
+    checks["gee_credentials"] = "ok" if (has_b64 or has_file or has_sa) else "missing"
 
     # Groq key configured
     checks["groq_key"] = "ok" if settings.groq_api_key else "missing"
