@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     gee_service_account_key: str = "./secrets/gee-service-account.json"
     gee_service_account_email: str = ""
     gee_project: str = "907232950083"
+    # Base64-encoded ~/.config/earthengine/credentials — set in Render env vars
+    gee_credentials_b64: str = ""
     groq_api_key: str = ""
     redis_url: str = "redis://localhost:6379/0"
     database_url: str = "postgresql://chronos:chronos@localhost:5432/chronos"

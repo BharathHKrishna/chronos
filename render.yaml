@@ -10,6 +10,8 @@ services:
         value: "907232950083"
       - key: GROQ_API_KEY
         sync: false          # set manually in Render dashboard
+      - key: GEE_CREDENTIALS_B64
+        sync: false          # set manually in Render dashboard (base64 of ~/.config/earthengine/credentials)
       - key: REDIS_URL
         fromService:
           type: redis

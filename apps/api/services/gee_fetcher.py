@@ -27,15 +27,21 @@ def _init_gee():
     global _initialized
     if _initialized:
         return
-    if settings.gee_service_account_email and os.path.exists(
-        settings.gee_service_account_key
-    ):
+
+    # If running on Render/Docker: write credentials from env var
+    if settings.gee_credentials_b64:
+        import base64, pathlib
+        cred_dir = pathlib.Path.home() / ".config" / "earthengine"
+        cred_dir.mkdir(parents=True, exist_ok=True)
+        cred_path = cred_dir / "credentials"
+        cred_path.write_text(base64.b64decode(settings.gee_credentials_b64).decode())
+
+    if settings.gee_service_account_email and os.path.exists(settings.gee_service_account_key):
         credentials = ee.ServiceAccountCredentials(
             settings.gee_service_account_email, settings.gee_service_account_key
         )
         ee.Initialize(credentials, project=settings.gee_project)
     else:
-        # Local dev: use saved user credentials (~/.config/earthengine/credentials)
         ee.Initialize(project=settings.gee_project)
     _initialized = True
 
