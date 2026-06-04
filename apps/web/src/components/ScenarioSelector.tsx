@@ -10,9 +10,10 @@ const SCENARIOS: { id: Scenario; label: string; desc: string; color: string }[] 
 interface Props {
   value: Scenario;
   onChange: (s: Scenario) => void;
+  disabled?: boolean;
 }
 
-export default function ScenarioSelector({ value, onChange }: Props) {
+export default function ScenarioSelector({ value, onChange, disabled }: Props) {
   return (
     <div>
       <div className="text-xs text-slate-400 uppercase tracking-wider mb-2 font-semibold">
@@ -22,8 +23,9 @@ export default function ScenarioSelector({ value, onChange }: Props) {
         {SCENARIOS.map((s) => (
           <button
             key={s.id}
-            onClick={() => onChange(s.id)}
-            className="text-left px-2.5 py-2 rounded border transition-all text-xs"
+            onClick={() => !disabled && onChange(s.id)}
+            disabled={disabled}
+            className="text-left px-2.5 py-2 rounded border transition-all text-xs disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
               borderColor: value === s.id ? s.color : "#2a2d3e",
               background: value === s.id ? s.color + "18" : "transparent",
