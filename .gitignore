@@ -18,3 +18,4 @@ models/*.pt
 !models/README.md
 *.log
 .DS_Store
+.github/
