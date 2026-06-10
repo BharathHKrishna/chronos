@@ -23,8 +23,24 @@ export interface ForecastData {
 export async function fetchHistory(lat: number, lon: number): Promise<HistoryData> {
   const r = await fetch(`${BASE}/history?lat=${lat}&lon=${lon}`);
   if (!r.ok) throw new Error(`History fetch failed: ${r.status}`);
-  const json = await r.json();
-  return json.data as HistoryData;
+
+  // Response is an SSE stream — read until a 'data:' line arrives
+  const reader = r.body!.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) throw new Error("History stream ended without data");
+    buf += decoder.decode(value, { stream: true });
+    const lines = buf.split("\n");
+    buf = lines.pop() ?? "";
+    for (const line of lines) {
+      if (!line.startsWith("data:")) continue;
+      const msg = JSON.parse(line.slice(5).trim());
+      if (msg.status === "error") throw new Error(msg.detail ?? "GEE fetch error");
+      if (msg.status === "done") return msg.data as HistoryData;
+    }
+  }
 }
 
 export async function fetchForecast(
